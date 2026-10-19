@@ -286,7 +286,7 @@ sample_session() {
 # the model server (EXIT trap).
 # @side_effects Removes the sampler process; prints a summary when auditing
 finish_audit() {
-  [[ -n "$SAMPLER_PID" ]] && kill "$SAMPLER_PID" 2>/dev/null || true
+  if [[ -n "$SAMPLER_PID" ]]; then kill "$SAMPLER_PID" 2>/dev/null || true; fi
   ((AUDIT)) || return 0
   local external
   external="$(unexpected_endpoints "$AUDIT_LOG")"
