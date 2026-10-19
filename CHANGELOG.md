@@ -4,11 +4,10 @@ All notable changes to claude-local are documented here.
 
 ## [1.0.0] — 2026-10-19
 
-First release as its own repository. The script began as `scripts/claude-local.sh` (1.2.5) in
-[ai-local-first](https://github.com/ali5ter/ai-local-first), where it was tied to that repo's `.env` and helper
-library.
+First release as its own repository. The script began as a `scripts/claude-local.sh` (1.2.5) inside the private
+repo that holds my local AI setup, where it was tied to that repo's `.env` and helper library.
 
-### Changes from the ai-local-first version
+### Changes from that version
 
 - Settings come from flags, the environment, then `~/.config/claude-local/env` (or `CLAUDE_LOCAL_CONFIG`), instead of
   a `.env` in the repo. The model variables are now `CLAUDE_LOCAL_MODEL` and `CLAUDE_LOCAL_HARD_MODEL`.

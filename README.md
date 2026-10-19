@@ -38,11 +38,6 @@ A few are easy to forget, and two took an afternoon each to find:
 - **The one-million-token trap.** Even with that set, Claude Code's "default" model setting resolves to a
   one-million-token variant that ignores the number above. `CLAUDE_CODE_DISABLE_1M_CONTEXT` turns that variant off.
 
-The story behind it is in
-[Running AI Locally — What I've Learned](https://different.com/posts/local-first-llm-setup/). The measurements, model
-evaluations and server setup scripts it came from are in
-[ai-local-first](https://github.com/ali5ter/ai-local-first).
-
 ## Install
 
 ```bash
