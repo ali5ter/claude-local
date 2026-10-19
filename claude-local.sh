@@ -36,9 +36,14 @@
 # and opus (and fable) map to a second, slower model for writing and judgement-heavy
 # work. Type /model opus to switch to it and /model sonnet to switch back. Each switch
 # makes Ollama load the other model and read the conversation again, so a long session
-# pauses while that happens. Without the flag every alias is the one model. Each alias
-# also gets a display name (the real model) and a short use-case description, so the
-# /model picker does not show Anthropic's labels for what is a local model.
+# pauses while that happens. Without the flag every alias is the one model.
+#
+# The /model picker is given its own lineup (the modelPicker setting, passed with
+# --settings so nothing is written to disk): one row per local model, titled with the
+# real model name and a short use-case description, replacing Anthropic's rows. The
+# ANTHROPIC_DEFAULT_*_MODEL_NAME variables are set as well, but on Claude Code 2.1.292
+# with a Claude subscription login they no longer reached the picker; the lineup does.
+# Fast mode is turned off too, since /fast would route to an Anthropic model.
 #
 # With --audit, connections made by the session are sampled and any endpoint other
 # than loopback and the model server is listed when it exits. That is evidence, not
@@ -48,12 +53,13 @@
 # ($CLAUDE_LOCAL_CONFIG, default ~/.config/claude-local/env; see env.template).
 #
 # Author: Alister Lewis-Bowen <alister@lewis-bowen.org>
-# Version: 1.0.1
+# Version: 1.1.0
 # Date: 2026-10-19
 # License: MIT
 #
 # Usage: claude-local [-u|--url URL] [-m|--model MODEL] [-s|--switchable] [-H|--hard-model MODEL]
-#                     [-a|--audit] [-e|--enable-auto-mode] [-V|--version] [-h|--help] [-- claude args ...]
+#                     [-a|--audit] [-e|--enable-auto-mode] [-n|--dry-run] [-V|--version] [-h|--help]
+#                     [-- claude args ...]
 #
 #   -u, --url URL             Ollama server (default: OLLAMA_HOST_URL, else http://localhost:11434)
 #   -m, --model M             Model for the session (default: CLAUDE_LOCAL_MODEL)
@@ -61,6 +67,8 @@
 #   -H, --hard-model M        Use M as the second model; implies --switchable
 #   -a, --audit               List connections beyond loopback and the model server on exit (needs lsof)
 #   -e, --enable-auto-mode    Enable Claude Code auto-mode (Shift+Tab to toggle)
+#   -n, --dry-run             Print the environment and command a session would start with, without
+#                             contacting the server or starting Claude Code
 #   -V, --version             Print the version and exit
 #
 #   Everything after -- is passed to claude, for example:
@@ -74,7 +82,7 @@
 
 set -euo pipefail
 
-VERSION="1.0.1"
+VERSION="1.1.0"
 CONFIG_FILE="${CLAUDE_LOCAL_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/claude-local/env}"
 
 # Settings the config file may set. The environment wins over the file, so the
@@ -101,6 +109,7 @@ AUDIT=0
 AUDIT_LOG=""
 SAMPLER_PID=""
 AUTO_MODE=0
+DRY_RUN=0
 
 # Minimal stand-in for pfb (https://github.com/ali5ter/pfb) when it is not installed,
 # covering the calls this script makes. Install pfb for the real thing.
@@ -247,6 +256,21 @@ check_prerequisites() {
   done
 }
 
+# Print the /model picker lineup as a JSON settings object: one row per local model,
+# titled with the model name, replacing Claude Code's built-in rows.
+# @param $1  Main model and its description ($2)
+# @param $3  Second model and its description ($4); omitted from the lineup when it equals $1
+# @return 0; prints compact JSON
+picker_settings() {
+  jq -cn --arg m "$1" --arg md "$2" --arg o "$3" --arg od "$4" '{
+    modelPicker: {
+      options: ([{model: "sonnet", label: $m, description: $md}]
+        + (if $o != $m then [{model: "opus", label: $o, description: $od}] else [] end)),
+      replaceBuiltInOptions: true
+    }
+  }'
+}
+
 # Print the context window requests get from the Ollama server.
 # Order: OLLAMA_CONTEXT_LENGTH, then the local server's environment (only when the server
 # is on this machine, so another machine's Ollama is never mistaken for it), else 32768.
@@ -336,6 +360,7 @@ main() {
         ;;
       -a | --audit) AUDIT=1 ;;
       -e | --enable-auto-mode) AUTO_MODE=1 ;;
+      -n | --dry-run) DRY_RUN=1 ;;
       -V | --version) echo "claude-local $VERSION"; exit 0 ;;
       -h | --help) usage; exit 0 ;;
       --)
@@ -359,10 +384,11 @@ main() {
     opus_desc="Writing and judgement, slower (Ollama)"
     to_check+=("$hard_model")
   fi
-  check_prerequisites "${to_check[@]}"
+  ((DRY_RUN)) || check_prerequisites "${to_check[@]}"
 
-  local window
+  local window picker
   window="$(server_context_length)"
+  picker="$(picker_settings "$model" "$sonnet_desc" "$opus_model" "$opus_desc")"
 
   pfb heading "Claude Code on a local model" "🏠"
   pfb subheading "Model: $model via $OLLAMA_HOST_URL (Ollama)"
@@ -383,6 +409,30 @@ main() {
   ((AUTO_MODE)) && pfb subheading "Auto-mode enabled (Shift+Tab to toggle)"
   echo
 
+  local -a auto_mode_args=()
+  ((AUTO_MODE)) && auto_mode_args+=(--enable-auto-mode)
+  local -a session_env=(
+    "ANTHROPIC_BASE_URL=$OLLAMA_HOST_URL"
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL=$model" "ANTHROPIC_DEFAULT_SONNET_MODEL=$model"
+    "ANTHROPIC_DEFAULT_OPUS_MODEL=$opus_model" "ANTHROPIC_DEFAULT_FABLE_MODEL=$opus_model"
+    "ANTHROPIC_DEFAULT_SONNET_MODEL_NAME=$model" "ANTHROPIC_DEFAULT_SONNET_MODEL_DESCRIPTION=$sonnet_desc"
+    "ANTHROPIC_DEFAULT_OPUS_MODEL_NAME=$opus_model" "ANTHROPIC_DEFAULT_OPUS_MODEL_DESCRIPTION=$opus_desc"
+    "ANTHROPIC_DEFAULT_FABLE_MODEL_NAME=$opus_model" "ANTHROPIC_DEFAULT_FABLE_MODEL_DESCRIPTION=$opus_desc"
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME=$model" "ANTHROPIC_DEFAULT_HAIKU_MODEL_DESCRIPTION=Background tasks (Ollama)"
+    CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 DISABLE_TELEMETRY=1 DISABLE_ERROR_REPORTING=1 DISABLE_AUTOUPDATER=1
+    "CLAUDE_CODE_MAX_CONTEXT_TOKENS=$window" CLAUDE_CODE_DISABLE_1M_CONTEXT=1 CLAUDE_CODE_DISABLE_FAST_MODE=1
+  )
+  local -a command=(claude --model "$start_model" --settings "$picker" "${auto_mode_args[@]}" "${claude_args[@]}")
+
+  if ((DRY_RUN)); then
+    printf 'env \\\n'
+    printf '  %q \\\n' "${session_env[@]}"
+    local quoted
+    quoted="$(printf '%q ' "${command[@]}")"
+    echo "  ${quoted% }"
+    return 0
+  fi
+
   if ((AUDIT)); then
     AUDIT_LOG="$(mktemp)"
     sample_session "$$" >/dev/null 2>&1 &
@@ -391,21 +441,7 @@ main() {
   trap finish_audit EXIT
 
   local rc=0
-  local -a auto_mode_args=()
-  ((AUTO_MODE)) && auto_mode_args+=(--enable-auto-mode)
-
-  env "ANTHROPIC_BASE_URL=$OLLAMA_HOST_URL" \
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL=$model" "ANTHROPIC_DEFAULT_SONNET_MODEL=$model" \
-    "ANTHROPIC_DEFAULT_OPUS_MODEL=$opus_model" \
-    "ANTHROPIC_DEFAULT_SONNET_MODEL_NAME=$model" "ANTHROPIC_DEFAULT_SONNET_MODEL_DESCRIPTION=$sonnet_desc" \
-    "ANTHROPIC_DEFAULT_OPUS_MODEL_NAME=$opus_model" "ANTHROPIC_DEFAULT_OPUS_MODEL_DESCRIPTION=$opus_desc" \
-    "ANTHROPIC_DEFAULT_FABLE_MODEL=$opus_model" \
-    "ANTHROPIC_DEFAULT_FABLE_MODEL_NAME=$opus_model" "ANTHROPIC_DEFAULT_FABLE_MODEL_DESCRIPTION=$opus_desc" \
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME=$model" \
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL_DESCRIPTION=Background tasks (Ollama)" \
-    CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 DISABLE_TELEMETRY=1 DISABLE_ERROR_REPORTING=1 DISABLE_AUTOUPDATER=1 \
-    "CLAUDE_CODE_MAX_CONTEXT_TOKENS=$window" CLAUDE_CODE_DISABLE_1M_CONTEXT=1 \
-    claude --model "$start_model" "${auto_mode_args[@]}" "${claude_args[@]}" || rc=$?
+  env "${session_env[@]}" "${command[@]}" || rc=$?
   return "$rc"
 }
 

@@ -2,6 +2,15 @@
 
 All notable changes to claude-local are documented here.
 
+## [1.1.0] — 2026-10-19
+
+- The `/model` picker lists the local models under their real names again, through a `modelPicker` lineup passed with
+  `--settings`. On Claude Code 2.1.292 the `ANTHROPIC_DEFAULT_*_MODEL_NAME` variables no longer reached the picker;
+  the lineup does, and it needs Claude Code 2.1.242 or later.
+- Fast mode is turned off for the session (`CLAUDE_CODE_DISABLE_FAST_MODE`), since `/fast` would route to an
+  Anthropic model.
+- New `--dry-run` flag prints the environment and command a session would start with.
+
 ## [1.0.1] — 2026-10-19
 
 - README and changelog no longer link to an unpublished post or name a private repo.

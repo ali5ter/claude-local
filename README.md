@@ -26,8 +26,10 @@ A few are easy to forget, and two took an afternoon each to find:
 - **The base URL.** `ANTHROPIC_BASE_URL` pointed at Ollama, which serves Anthropic's Messages API. No auth token is
   set: Ollama needs none, and a placeholder makes Claude Code warn that its claude.ai connectors are disabled.
 - **Every model alias.** Claude Code makes background calls to a small model by name (haiku), and Ollama has no model
-  called that. So haiku, sonnet, opus and fable are all mapped to the local model, and the `/model` picker shows the
-  real model name and a use-case description instead of Anthropic's labels.
+  called that. So haiku, sonnet, opus and fable are all mapped to the local model.
+- **The model picker.** `/model` is given its own lineup through the `modelPicker` setting, passed on the command line
+  so nothing is written to disk: one row per local model, titled with the real model name and a use-case description,
+  in place of Anthropic's rows. Fast mode is turned off as well, because `/fast` would route to an Anthropic model.
 - **The phone-home switches.** `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`, `DISABLE_TELEMETRY`,
   `DISABLE_ERROR_REPORTING` and `DISABLE_AUTOUPDATER`. Without them, a session pointed entirely at a local model still
   opens connections to Anthropic and to a Google Cloud host.
@@ -55,9 +57,10 @@ Requirements:
 - [pfb](https://github.com/ali5ter/pfb) for the terminal output shown above; without it the script prints plain text
 - `lsof`, only for `--audit`
 
-Tested with Claude Code 2.1.292 and Ollama 0.40.5 on macOS. Several of the variables above are undocumented Claude Code
-internals and can change between releases; if a session stops behaving as described, please open an issue with the
-Claude Code version.
+Tested with Claude Code 2.1.292 and Ollama 0.40.5 on macOS. The picker lineup needs Claude Code 2.1.242 or later;
+before that, `/model` shows Anthropic's row names, and everything else still works. Some of the variables above are
+undocumented Claude Code internals and can change between releases; if a session stops behaving as described, please
+open an issue with the Claude Code version. `claude-local --dry-run` prints exactly what a session would start with.
 
 ## Use
 
@@ -79,6 +82,7 @@ claude-local -- -p "Reply with exactly: ok"    # everything after -- goes to cla
 | `-H`, `--hard-model MODEL` | Use this as the second model; implies `--switchable` |
 | `-a`, `--audit` | List connections beyond loopback and the model server on exit (needs `lsof`) |
 | `-e`, `--enable-auto-mode` | Enable Claude Code auto mode |
+| `-n`, `--dry-run` | Print the environment and command a session would start with, without starting one |
 | `-V`, `--version` | Print the version |
 | `-h`, `--help` | Usage |
 
@@ -101,9 +105,12 @@ refused with the list of models that are.
 
 Claude Code's `/model` command only chooses between its own aliases, so the only way to get two local models into one
 session is to map two of them. With `--switchable`, sonnet and haiku go to the main model and opus and fable go to a
-second, slower one for writing and judgement-heavy work. `/model opus` switches to it and `/model sonnet` back. Each
-switch makes Ollama load the other model and re-read the conversation, so a long session pauses while that happens.
-That is why it is a flag and not the default.
+second, slower one for writing and judgement-heavy work. `/model opus` switches to it and `/model sonnet` back, and
+the picker lists both under their real names. Each switch makes Ollama load the other model and re-read the
+conversation, so a long session pauses while that happens. That is why it is a flag and not the default.
+
+The picker's Default row keeps Anthropic's label; Claude Code always shows it. Passing your own `--settings` after
+`--` replaces the lineup, since Claude Code takes one `--settings` value per session.
 
 ### Ollama on another machine
 
