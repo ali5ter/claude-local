@@ -2,6 +2,11 @@
 
 All notable changes to claude-local are documented here.
 
+## [1.0.1] — 2026-10-19
+
+- README and changelog no longer link to an unpublished post or name a private repo.
+- The audit trap satisfies SC2015 on the shellcheck version in CI; no behaviour change.
+
 ## [1.0.0] — 2026-10-19
 
 First release as its own repository. The script began as a `scripts/claude-local.sh` (1.2.5) inside the private
