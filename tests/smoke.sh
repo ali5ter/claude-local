@@ -81,6 +81,8 @@ check "flag beats the environment" 1 'not reachable at http://127.0.0.1:11' \
 check "dry run prints the base URL and the picker lineup" 0 \
   'ANTHROPIC_BASE_URL=http://127.0.0.1:9.*claude --model one:1b --settings .*replaceBuiltInOptions' \
   env OLLAMA_CONTEXT_LENGTH=131072 "$SCRIPT" --dry-run --url "$DEAD_URL" --model one:1b
+check "dry run blocks the real API key" 0 'ANTHROPIC_API_KEY=' \
+  env OLLAMA_CONTEXT_LENGTH=131072 ANTHROPIC_API_KEY=real-secret "$SCRIPT" --dry-run --url "$DEAD_URL" --model one:1b
 check "dry run with --switchable lists both models" 0 '--model sonnet --settings .*label.*one:1b.*label.*two:2b' \
   env OLLAMA_CONTEXT_LENGTH=131072 "$SCRIPT" --dry-run --url "$DEAD_URL" --model one:1b --hard-model two:2b
 check "dry run passes claude arguments through" 0 'CLAUDE_CODE_MAX_CONTEXT_TOKENS=131072.* -p ok$' \

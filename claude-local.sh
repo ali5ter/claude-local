@@ -412,6 +412,7 @@ main() {
   local -a auto_mode_args=()
   ((AUTO_MODE)) && auto_mode_args+=(--enable-auto-mode)
   local -a session_env=(
+    "ANTHROPIC_API_KEY="
     "ANTHROPIC_BASE_URL=$OLLAMA_HOST_URL"
     "ANTHROPIC_DEFAULT_HAIKU_MODEL=$model" "ANTHROPIC_DEFAULT_SONNET_MODEL=$model"
     "ANTHROPIC_DEFAULT_OPUS_MODEL=$opus_model" "ANTHROPIC_DEFAULT_FABLE_MODEL=$opus_model"
