@@ -2,6 +2,11 @@
 
 All notable changes to claude-local are documented here.
 
+## [Unreleased]
+
+- The release workflow's tap update is a no-op when the formula already points at the tag, instead of failing on
+  "nothing to commit".
+
 ## [1.1.0] — 2026-10-19
 
 - The `/model` picker lists the local models under their real names again, through a `modelPicker` lineup passed with
