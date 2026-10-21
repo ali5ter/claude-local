@@ -42,9 +42,29 @@ A few are easy to forget, and two took an afternoon each to find:
 
 ## Install
 
+### macOS
+
 ```bash
 brew install ali5ter/tap/claude-local
 ```
+
+### Linux, Raspberry Pi OS, Debian, Ubuntu
+
+```bash
+curl -sL https://raw.githubusercontent.com/ali5ter/claude-local/main/claude-local.sh -o claude-local.sh
+chmod +x claude-local.sh
+mv claude-local.sh ~/.local/bin/claude-local
+```
+
+Installs to `~/.local/bin/claude-local`. Add `~/.local/bin` to your `PATH` if it is not already.
+
+For a system-wide install (requires sudo):
+
+```bash
+sudo mv claude-local.sh /usr/local/bin/claude-local
+```
+
+This installs the latest version from `main`. For a pinned version, replace `main` in the URL with a tag (e.g. `v1.1.0`).
 
 Or copy `claude-local.sh` anywhere on your `PATH`. It is a single file.
 
