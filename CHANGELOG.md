@@ -4,6 +4,13 @@ All notable changes to claude-local are documented here.
 
 ## [Unreleased]
 
+- The README says to press `s`, not Enter, in the `/model` picker: Enter saves the row's alias as Claude Code's default
+  model for new sessions, so plain `claude` would start on Sonnet or Opus afterwards.
+- Release notes come from this file's section for the tag instead of GitHub's generated notes, which were empty
+  without pull requests.
+- The "Tested with" line is gone from the README; the Claude Code minimum for the picker remains.
+- The README opens with a recorded demo of a real session (`examples/claude-local_demo.gif`, made with vhs from
+  `examples/claude-local_demo.tape` through `examples/run_vhs.sh`) in place of a pasted banner.
 - The release workflow's tap update is a no-op when the formula already points at the tag, instead of failing on
   "nothing to commit".
 

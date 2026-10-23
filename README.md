@@ -1,18 +1,11 @@
 # claude-local
 
 Start a [Claude Code](https://claude.com/claude-code) session on a local model served by
-[Ollama](https://ollama.com), with every environment variable the session needs set together and nothing written to
-disk.
+[Ollama](https://ollama.com), with every environment variable the session needs set together. The script itself
+writes nothing to disk.
 
-```console
-❯ claude-local --switchable
-
-🏠 Claude Code on a local model
-   Model: qwen3.6:35b-a3b-coding via http://192.168.1.63:11434 (Ollama)
-   Switchable: /model sonnet = qwen3.6:35b-a3b-coding, /model opus = qwen3.8:27b (each switch reloads the conversation)
-   Inference runs on 192.168.1.63; tools and files stay here. This session does not use your Claude subscription
-   Context window: 131072 tokens
-```
+![claude-local demo: a session starts on a local model, /model lists the local models, a prompt is answered, and the
+network audit on exit reports no outside connections](examples/claude-local_demo.gif)
 
 Plain `claude` is untouched. Everything the script sets is for that one process, so the same machine can run a cloud
 session in the next terminal, and `~/.claude` and its symlinks are left exactly as they are. Your real configuration
@@ -74,13 +67,13 @@ Requirements:
 - [Ollama](https://ollama.com) recent enough to serve the Anthropic Messages API (`/v1/messages`), on this machine or
   another one you can reach, with at least one model pulled
 - `curl` and `jq`
-- [pfb](https://github.com/ali5ter/pfb) for the terminal output shown above; without it the script prints plain text
+- [pfb](https://github.com/ali5ter/pfb) for the terminal output shown in the demo; without it the script prints plain text
 - `lsof`, only for `--audit`
 
-Tested with Claude Code 2.1.292 and Ollama 0.40.5 on macOS. The picker lineup needs Claude Code 2.1.242 or later;
-before that, `/model` shows Anthropic's row names, and everything else still works. Some of the variables above are
-undocumented Claude Code internals and can change between releases; if a session stops behaving as described, please
-open an issue with the Claude Code version. `claude-local --dry-run` prints exactly what a session would start with.
+The picker lineup needs Claude Code 2.1.242 or later; before that, `/model` shows Anthropic's row names, and
+everything else still works. Some of the variables above are undocumented Claude Code internals and can change between
+releases; if a session stops behaving as described, please open an issue with the Claude Code version.
+`claude-local --dry-run` prints exactly what a session would start with.
 
 ## Use
 
@@ -129,6 +122,11 @@ second, slower one for writing and judgement-heavy work. `/model opus` switches 
 the picker lists both under their real names. Each switch makes Ollama load the other model and re-read the
 conversation, so a long session pauses while that happens. That is why it is a flag and not the default.
 
+In the picker, press `s` to switch for this session. Enter saves the choice as Claude Code's default for new sessions,
+and because the rows map to Claude Code's own aliases, what gets saved is `sonnet` or `opus`: your next plain `claude`
+would then start on that Anthropic model. A claude-local session is unaffected either way, since it always passes
+`--model`.
+
 The picker's Default row keeps Anthropic's label; Claude Code always shows it. Passing your own `--settings` after
 `--` replaces the lineup, since Claude Code takes one `--settings` value per session.
 
@@ -165,9 +163,10 @@ what that command lacks.
 ## Develop
 
 ```bash
-shellcheck -x claude-local.sh tests/*.sh
+shellcheck -x claude-local.sh tests/*.sh examples/*.sh
 markdownlint '*.md'
 tests/smoke.sh          # offline checks: flags, precedence, error paths
+examples/run_vhs.sh     # re-record the demo gif with vhs; needs a reachable Ollama
 ```
 
 Releases are annotated tags (`v1.2.3`); the release workflow publishes GitHub release notes and updates the Homebrew

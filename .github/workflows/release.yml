@@ -14,10 +14,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Extract this version's changelog entry
+        run: |
+          set -euo pipefail
+          # The section between this tag's heading and the next "## " heading, with the
+          # heading itself dropped. Fails loudly if the tag has no entry.
+          awk -v tag="${GITHUB_REF_NAME#v}" '
+            /^## \[/ { in_section = index($0, "[" tag "]") > 0; next }
+            in_section { print }
+          ' CHANGELOG.md | sed -e '/./,$!d' > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "CHANGELOG.md has no entry for ${GITHUB_REF_NAME}. Date the [Unreleased] section as [${GITHUB_REF_NAME#v}] and re-tag." >&2
+            exit 1
+          fi
+          cat release-notes.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: true
+          body_path: release-notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

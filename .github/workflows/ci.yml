@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: shellcheck
-        run: shellcheck -x claude-local.sh tests/*.sh
+        run: shellcheck -x claude-local.sh tests/*.sh examples/*.sh
       - name: markdownlint
         uses: DavidAnson/markdownlint-cli2-action@v19
         with:
