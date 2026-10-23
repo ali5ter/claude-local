@@ -2,7 +2,7 @@
 
 All notable changes to claude-local are documented here.
 
-## [Unreleased]
+## [1.2.0] — 2026-10-23
 
 - The README says to press `s`, not Enter, in the `/model` picker: Enter saves the row's alias as Claude Code's default
   model for new sessions, so plain `claude` would start on Sonnet or Opus afterwards.

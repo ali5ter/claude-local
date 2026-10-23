@@ -53,8 +53,8 @@
 # ($CLAUDE_LOCAL_CONFIG, default ~/.config/claude-local/env; see env.template).
 #
 # Author: Alister Lewis-Bowen <alister@lewis-bowen.org>
-# Version: 1.1.0
-# Date: 2026-10-19
+# Version: 1.2.0
+# Date: 2026-10-23
 # License: MIT
 #
 # Usage: claude-local [-u|--url URL] [-m|--model MODEL] [-s|--switchable] [-H|--hard-model MODEL]
@@ -82,7 +82,7 @@
 
 set -euo pipefail
 
-VERSION="1.1.0"
+VERSION="1.2.0"
 CONFIG_FILE="${CLAUDE_LOCAL_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/claude-local/env}"
 
 # Settings the config file may set. The environment wins over the file, so the
